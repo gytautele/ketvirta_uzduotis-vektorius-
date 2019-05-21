@@ -190,3 +190,38 @@ int main()
     return 0;
 }
 ```
+
+## Atminties perskirstymo palyginimas
+
+| ***mano vektorius***   | ***std::vector*** |
+| :---------: | :----------: | 
+| ***35*** | ***20*** |
+
+```
+#include <vector>
+#include <iostream>
+
+using std::vector;
+
+int main() {
+    unsigned int sz = 1000000;
+    std::vector<int> v1;
+    int szs = 0;
+    int v1_add = 0;
+
+    for (int i = 0; i < sz; i++) {
+        if (v1.capacity() != szs) {
+            szs = v1.capacity();
+            v1_add++;
+        }
+        v1.push_back(i);
+    }
+    
+    std::cout << v1_add << std::endl;
+
+    return 0;
+}
+```
+*Analogiškai su mano vektoriumi
+
+
