@@ -120,12 +120,73 @@ void unchecked_append(const T& val)
 | ***10000000 eilučių***   | ***0.439457 s.***|
 | ***100000000 eilučių***   | ***4.11614 s.***|
 
+```
+#include "time.h"
+#include <vector>
+
+using std::vector;
+
+int main()
+{
+    std::ofstream out;
+    out.open("benchmarking.txt", std::fstream::app);
+    Time laikas;
+    laikas.Start_clock();
+
+    unsigned int sz = 10000;  // 100000, 1000000, 10000000, 100000000
+    std::vector<int> v1;
+    for (int i = 1; i <= 5; ++i)
+    {
+        for (int j = 1; j <= sz; ++j)
+        {
+            v1.push_back(i);
+        }
+        sz*=10;
+        int skaicius;
+        skaicius=sz;
+        laikas.Stop_clock();
+        laikas.Get_time(out, skaicius);
+    }
+
+    return 0;
+}
+```
+
 ### Su std::vector:
 
-| ***10000 eilučių***   | ***0.0004745 s.*** |
+| ***10000 eilučių***   | ***0.0005475 s.*** |
 | :------------- | :----------: | 
-| ***100000 eilučių*** | ***0.004533 s.*** |
-| ***1000000 eilučių***   | ***0.0480246 s.*** |
-| ***10000000 eilučių***   | ***0.439457 s.***|
-| ***100000000 eilučių***   | ***4.11614 s.***|
+| ***100000 eilučių*** | ***0.0048521 s.*** |
+| ***1000000 eilučių***   | ***0.0540878 s.*** |
+| ***10000000 eilučių***   | ***0.479451 s.***|
+| ***100000000 eilučių***   | ***4.46791 s.***|
 
+```
+#include "time.h"
+#include "vector.h"
+
+int main()
+{
+    std::ofstream out;
+    out.open("benchmarking.txt", std::fstream::app);
+    Time laikas;
+    laikas.Start_clock();
+
+    unsigned int sz = 10000;  // 100000, 1000000, 10000000, 100000000
+    vector<int> v2;
+    for (int i = 1; i <= 5; ++i)
+    {
+        for (int j = 1; j <= sz; ++j)
+        {
+            v2.push_back(i);
+        }
+        sz*=10;
+        int skaicius;
+        skaicius=sz;
+        laikas.Stop_clock();
+        laikas.Get_time(out, skaicius);
+    }
+
+    return 0;
+}
+```
