@@ -195,7 +195,7 @@ int main()
 
 | ***mano vektorius***   | ***std::vector*** |
 | :---------: | :----------: | 
-| ***35*** | ***20*** |
+| ***35*** | ***21*** |
 
 ```
 #include <vector>
@@ -223,5 +223,3 @@ int main() {
 }
 ```
 *Analogiškai su mano vektoriumi
-
-
