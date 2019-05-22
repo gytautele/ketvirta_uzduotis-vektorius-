@@ -89,10 +89,10 @@ void push_back(const T& val)
 ```
 void grow()
     {
-        size_type new_size = std::max(2 * (limit - data), ptrdiff_t(1));
+        size_type new_size = std::max(2 * (limit - data), ptrdiff_t(1)); //is used for pointer arithmetic and array indexing
 
         iterator new_data = alloc.allocate(new_size);
-        iterator new_avail = std::uninitialized_copy(data, avail, new_data);
+        iterator new_avail = std::uninitialized_copy(data, avail, new_data); //Copies elements from the range [first, last) to an uninitialized memory area beginning at d_first
 
         uncreate();
 
@@ -106,6 +106,20 @@ void grow()
 void unchecked_append(const T& val)
     {
         alloc.construct(avail++, val);
+    }
+```
+#### Pridedu uncreate() funkciją:
+```
+void uncreate()
+    {
+        if (data)
+        {
+            iterator it = avail;
+            while (it != data)
+                alloc.destroy(--it);
+            alloc.deallocate(data, limit - data);
+        }
+        data = limit = avail = nullptr;
     }
 ```
 
