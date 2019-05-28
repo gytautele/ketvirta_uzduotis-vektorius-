@@ -47,24 +47,49 @@ public:
         if (&a == this)  return *this;
         uncreate();
         create(a.begin(), a.end());
+        cout << "naudojama copy semantika" << endl;
         return *this;
+
     }
     //---------------------------
-    vector& operator=(vector&& a) noexcept
-    {
-        a.swap(*this);
-        return *this;
+   vector& operator=(vector&& a) noexcept {
+        if (&a == this) return *this;
+        uncreate();
+
+        std::swap(a.data, data);
+        std::swap(a.avail, avail);
+        std::swap(a.limit, limit);
+        cout << "naudojama move semantika" << endl;
     }
-    //--------------------------------------
+    //-----------------------------------------
     ~vector() { uncreate(); } //destruktorius
     //-------------------------------------
     T& operator[](size_type i) {
-        if ( i > size() || i < 0) throw std::out_of_range("pasiektas [] operatoriaus limitas");
+
+        try {
+            if (i > size() || i < 0) throw std::out_of_range("pasiektas [] operatoriaus limitas");
+        }
+        catch (const std::out_of_range& e)
+        {
+            cout << e.what();
+            exit(0);
+        }
+
         return data[i];
+
     }
     //------------------------------------
     const T& operator[](size_type i) const { // toks pats kaip [] tik konstas
-        if ( i > size() || i < 0 ) throw std::out_of_range("pasiektas [] operatoriaus limitas");
+
+        try {
+            if (i > size() || i < 0) throw std::out_of_range("pasiektas [] operatoriaus limitas");
+        }
+        catch (const std::out_of_range& e)
+        {
+            cout << e.what();
+            exit(0);
+        }
+
         return data[i];
     }
     //---------------------------------------
@@ -77,7 +102,8 @@ public:
         return false;
     }
     //----------------------------------------
-    size_type capacity() const { return limit - data; } //kaip ir skaidrėse
+    size_type capacity() const {
+        return limit - data; } //kaip ir skaidrėse
     //----------------------------------------
     //Iteratoriai
     //---------------------------------------
@@ -133,12 +159,28 @@ public:
     //--------------------------
     T& at(size_type pos)
     {
-        if (size() <= pos || pos < 0) throw std::out_of_range("Ivyko klaida su at - out of range");
+        try {
+            if (size() <= pos || pos < 0) throw std::out_of_range("Ivyko klaida su at - out of range");
+        }
+        catch (const std::out_of_range& e)
+        {
+            cout << e.what();
+            exit(0);
+        }
+
         return data[pos];
     }
     const T& at(size_type pos) const
     {
-        if (size() < pos || pos < 0) throw std::out_of_range("Ivyko klaida su at - out of range");
+        try {
+            if (size() <= pos || pos < 0) throw std::out_of_range("Ivyko klaida su at - out of range");
+        }
+        catch (const std::out_of_range& e)
+        {
+            cout << e.what();
+            exit(0);
+        }
+
         return data[pos];
     }
     //----------------------
@@ -180,8 +222,10 @@ public:
         avail = it;
     }
     //---------------------
-
-    //---------------------
+    void shrink_to_fit()
+    {
+        limit=avail;
+    }
     void resize(size_type count, value_type value = T())
     {
         if (count < size())
@@ -231,12 +275,17 @@ private:
     {
         data = avail = limit = nullptr;
     }
-    void shrink_to_fit()
-    {
-        //capacity()=size();
-    }
     void create(size_type n, const T& val)
     {
+        try {
+            if (n>1215752191) throw std::out_of_range("pasiektas dydzio limitas");
+        }
+        catch (const std::out_of_range& e)
+        {
+            cout << e.what();
+            exit(0);
+        }
+
         data = alloc.allocate(n);
         limit = avail = data + n;
         std::uninitialized_fill(data, limit, val); // Copies the given value to an uninitialized memory area, defined by the range [first, last)
@@ -258,12 +307,6 @@ private:
             alloc.deallocate(data, limit - data);
         }
         data = limit = avail = nullptr;
-    }
-    //-----------------------------------------------
-    void swap(vector& c)
-    {
-        std::swap(c.capacity(), capacity());
-        std::swap(c.size()&, &size()&);
     }
     //----------------------------------------------
     void grow()
@@ -287,8 +330,16 @@ private:
     }
     //----------------------------------------------
     friend vector operator+(const vector& a, const vector& b) {
-        if (a.size() != b.size())
-            throw std::runtime_error("Vektorių dydžio neatitikimas!");
+
+        try {
+            if (a.size() != b.size()) throw std::out_of_range("Vektorių dydžio neatitikimas!");
+        }
+        catch (const std::out_of_range& e)
+        {
+            cout << e.what();
+            exit(0);
+        }
+
         auto size = a.size();
         vector c(size);
         for (auto i = 0; i != a.size(); ++i) c[i] = a[i] + b[i];
