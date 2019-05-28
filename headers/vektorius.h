@@ -1,14 +1,31 @@
-#ifndef VEKTORIUS_VEKTORIUS_H
-#define VEKTORIUS_VEKTORIUS_H
+#ifndef PASKAITU_TEORIJA_VECTOR_H
+#define PASKAITU_TEORIJA_VECTOR_H
 
 #include<iterator>
 #include<memory>
 #include<iostream>
+#include<algorithm>
 #include<exception> //Exceptions provide a way to react to exceptional circumstances (like runtime errors) in programs by transferring control to special functions called handlers.
+#include <chrono>
 
 using std::cout;
 using std::endl;
 using std::size_t; //std::size_t is the unsigned integer type of the result of the sizeof operator as well as the sizeof... operator and the alignof operator
+
+class Timer {
+private:
+    // per using sutrumpiname ilgus chrono bibliotekos tipus
+    using hrClock = std::chrono::high_resolution_clock;
+    using durationDouble = std::chrono::duration<double>;
+    std::chrono::time_point<hrClock> start;
+
+public:
+    Timer() : start{hrClock::now()} {}
+    void reset() { start = hrClock::now(); }
+    double elapsed() const {
+        return durationDouble(hrClock::now() - start).count();
+    }
+};
 
 template <class T> class vector
 {
@@ -30,21 +47,52 @@ public:
         if (&a == this)  return *this;
         uncreate();
         create(a.begin(), a.end());
+        //cout << "naudojama copy semantika" << endl;
         return *this;
+
     }
-    //--------------------------------------
+    //---------------------------
+    vector& operator=(vector&& a) noexcept {
+        if (&a == this) return *this;
+        uncreate();
+
+        std::swap(a.data, data);
+        std::swap(a.avail, avail);
+        std::swap(a.limit, limit);
+        //cout << "naudojama move semantika" << endl;
+    }
+    //-----------------------------------------
     ~vector() { uncreate(); } //destruktorius
     //-------------------------------------
     T& operator[](size_type i) {
-        if ( i > size() || i < 0) throw std::out_of_range("pasiektas [] operatoriaus limitas");
+
+        try {
+            if (i > size() || i < 0) throw std::out_of_range("pasiektas [] operatoriaus limitas");
+        }
+        catch (const std::out_of_range& e)
+        {
+            cout << e.what();
+            exit(0);
+        }
+
         return data[i];
+
     }
     //------------------------------------
     const T& operator[](size_type i) const { // toks pats kaip [] tik konstas
-        if ( i > size() || i < 0 ) throw std::out_of_range("pasiektas [] operatoriaus limitas");
+
+        try {
+            if (i > size() || i < 0) throw std::out_of_range("pasiektas [] operatoriaus limitas");
+        }
+        catch (const std::out_of_range& e)
+        {
+            cout << e.what();
+            exit(0);
+        }
+
         return data[i];
     }
-    //----------------------------------------
+    //---------------------------------------
     size_type size() const { return avail - data; } //kaip ir skaidrėse
     //----------------------------------------
     bool empty() const //nenaudojama kolkas programoje
@@ -54,9 +102,9 @@ public:
         return false;
     }
     //----------------------------------------
-    size_type capacity() const { return limit - data; } //kaip ir skaidrėse
+    size_type capacity() const {
+        return limit - data; } //kaip ir skaidrėse
     //----------------------------------------
-
     //Iteratoriai
     //---------------------------------------
     iterator begin() { return data; }
@@ -64,7 +112,7 @@ public:
     //---------------------------------------
     iterator end() { return avail; }
     const_iterator end() const { return avail; }
-    //--------------------------------------
+    //---------------------------------------
     //Returns a reverse iterator to the first element of the reversed container.
     // It corresponds to the last element of the non-reversed container.
     // If the container is empty, the returned iterator is equal to rend().
@@ -109,18 +157,33 @@ public:
         return *(--it);
     }
     //--------------------------
-
     T& at(size_type pos)
     {
-        if (size() <= pos || pos < 0) throw std::out_of_range("Ivyko klaida su at - out of range");
+        try {
+            if (size() <= pos || pos < 0) throw std::out_of_range("Ivyko klaida su at - out of range");
+        }
+        catch (const std::out_of_range& e)
+        {
+            cout << e.what();
+            exit(0);
+        }
+
         return data[pos];
     }
     const T& at(size_type pos) const
     {
-        if (size() < pos || pos < 0) throw std::out_of_range("Ivyko klaida su at - out of range");
+        try {
+            if (size() <= pos || pos < 0) throw std::out_of_range("Ivyko klaida su at - out of range");
+        }
+        catch (const std::out_of_range& e)
+        {
+            cout << e.what();
+            exit(0);
+        }
+
         return data[pos];
     }
-    //-----------------------
+    //----------------------
     void reserve(size_type new_cap)
     {
         if (new_cap > capacity())
@@ -159,6 +222,10 @@ public:
         avail = it;
     }
     //---------------------
+    void shrink_to_fit()
+    {
+        limit=avail;
+    }
     void resize(size_type count, value_type value = T())
     {
         if (count < size())
@@ -210,14 +277,24 @@ private:
     }
     void create(size_type n, const T& val)
     {
+        try {
+            if (n>1215752191) throw std::out_of_range("pasiektas dydzio limitas");
+        }
+        catch (const std::out_of_range& e)
+        {
+            cout << e.what();
+            exit(0);
+        }
+
         data = alloc.allocate(n);
         limit = avail = data + n;
-        std::uninitialized_fill(data, limit, val);
+        std::uninitialized_fill(data, limit, val); // Copies the given value to an uninitialized memory area, defined by the range [first, last)
+        //cout << "create su n ir val" << endl;
     }
-    void create(const_iterator i, const_iterator j)
-    {
+    void create(const_iterator i, const_iterator j) {
         data = alloc.allocate(j - i);
         limit = avail = std::uninitialized_copy(i, j, data);
+        //cout << "create su i ir j" << endl;
     }
     //-----------------------------------
     void uncreate()
@@ -231,13 +308,14 @@ private:
         }
         data = limit = avail = nullptr;
     }
-    //-----------------------------------------------
+    //----------------------------------------------
     void grow()
     {
-        size_type new_size = std::max(2 * (limit - data), ptrdiff_t(1));
+        size_type new_size;
+        new_size = std::max(2 * (limit - data), ptrdiff_t(1)); //is used for pointer arithmetic and array indexing
 
         iterator new_data = alloc.allocate(new_size);
-        iterator new_avail = std::uninitialized_copy(data, avail, new_data);
+        iterator new_avail = std::uninitialized_copy(data, avail, new_data); //Copies elements from the range [first, last) to an uninitialized memory area beginning at d_first
 
         uncreate();
 
@@ -250,6 +328,24 @@ private:
     {
         alloc.construct(avail++, val);
     }
+    //----------------------------------------------
+    friend vector operator+(const vector& a, const vector& b) {
+
+        try {
+            if (a.size() != b.size()) throw std::out_of_range("Vektorių dydžio neatitikimas!");
+        }
+        catch (const std::out_of_range& e)
+        {
+            cout << e.what();
+            exit(0);
+        }
+
+        auto size = a.size();
+        vector c(size);
+        for (auto i = 0; i != a.size(); ++i) c[i] = a[i] + b[i];
+        return c;
+    }
+    //--------------------------------------------
 };
 
-#endif //VEKTORIUS_VEKTORIUS_H
+#endif //PASKAITU_TEORIJA_VECTOR_H
